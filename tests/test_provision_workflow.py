@@ -35,3 +35,11 @@ def test_workflow_validates_credentials_before_token_step():
     assert validation_pos < token_pos, (
         "Credential validation step must appear before the App token creation step"
     )
+
+
+def test_workflow_skips_provision_when_credentials_are_missing():
+    content = WORKFLOW_PATH.read_text(encoding="utf-8")
+
+    assert 'echo "skip_provision=true" >> "$GITHUB_OUTPUT"' in content
+    assert "Provisioning is being skipped." in content
+    assert "if: steps.validate-credentials.outputs.skip_provision != 'true'" in content

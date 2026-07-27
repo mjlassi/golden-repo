@@ -59,6 +59,7 @@ jobs:
         uses: actions/checkout@v7
 
       - name: Validate provisioning credentials
+        id: validate-credentials
         env:
           APP_CLIENT_ID: ${{ vars.PROVISIONER_APP_CLIENT_ID || secrets.PROVISIONER_APP_CLIENT_ID || vars.PROVISIONER_APP_ID || secrets.PROVISIONER_APP_ID }}
           APP_PRIVATE_KEY: ${{ secrets.PROVISIONER_APP_PRIVATE_KEY }}
@@ -73,14 +74,18 @@ jobs:
           fi
           if [ "${#missing[@]}" -gt 0 ]; then
             for cred in "${missing[@]}"; do
-              echo "::error::Missing required credential: $cred"
+              echo "::warning::Missing required credential: $cred"
             done
+            echo "skip_provision=true" >> "$GITHUB_OUTPUT"
+            echo "Provisioning is being skipped."
             echo "Configure the listed credentials in Settings > Secrets and variables"
             echo "or in the repo-provisioning environment. See docs/configuration.md."
-            exit 1
+            exit 0
           fi
+          echo "skip_provision=false" >> "$GITHUB_OUTPUT"
 
       - name: Create GitHub App installation token
+        if: steps.validate-credentials.outputs.skip_provision != 'true'
         id: app-token
         uses: actions/create-github-app-token@v3
         with:
@@ -89,14 +94,17 @@ jobs:
           owner: ${{ github.repository_owner }}
 
       - name: Set up Python
+        if: steps.validate-credentials.outputs.skip_provision != 'true'
         uses: actions/setup-python@v6
         with:
           python-version: '3.11'
 
       - name: Install provisioning dependencies
+        if: steps.validate-credentials.outputs.skip_provision != 'true'
         run: python -m pip install -r tools/requirements.txt
 
       - name: Provision repository
+        if: steps.validate-credentials.outputs.skip_provision != 'true'
         env:
           GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
           INPUT_REPO_NAME: ${{ inputs.repo_name }}
@@ -125,9 +133,17 @@ jobs:
           python tools/provision_repo.py "${args[@]}"
 
       - name: Write repository URL to summary
+        if: steps.validate-credentials.outputs.skip_provision != 'true'
         env:
           INPUT_REPO_NAME: ${{ inputs.repo_name }}
         run: |
           echo "## Provisioned repository" >> "$GITHUB_STEP_SUMMARY"
           echo "" >> "$GITHUB_STEP_SUMMARY"
           echo "https://github.com/${{ github.repository_owner }}/$INPUT_REPO_NAME" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Write skip reason to summary
+        if: steps.validate-credentials.outputs.skip_provision == 'true'
+        run: |
+          echo "## Provisioning skipped" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "Missing provisioning credentials. Configure PROVISIONER_APP_CLIENT_ID (or PROVISIONER_APP_ID) and PROVISIONER_APP_PRIVATE_KEY." >> "$GITHUB_STEP_SUMMARY"
