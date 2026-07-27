@@ -58,6 +58,28 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
 
+      - name: Validate provisioning credentials
+        env:
+          APP_CLIENT_ID: ${{ vars.PROVISIONER_APP_CLIENT_ID || secrets.PROVISIONER_APP_CLIENT_ID || vars.PROVISIONER_APP_ID || secrets.PROVISIONER_APP_ID }}
+          APP_PRIVATE_KEY: ${{ secrets.PROVISIONER_APP_PRIVATE_KEY }}
+        run: |
+          set -euo pipefail
+          missing=()
+          if [ -z "$APP_CLIENT_ID" ]; then
+            missing+=("PROVISIONER_APP_CLIENT_ID or PROVISIONER_APP_ID (variable or secret)")
+          fi
+          if [ -z "$APP_PRIVATE_KEY" ]; then
+            missing+=("PROVISIONER_APP_PRIVATE_KEY (secret)")
+          fi
+          if [ "${#missing[@]}" -gt 0 ]; then
+            for cred in "${missing[@]}"; do
+              echo "::error::Missing required credential: $cred"
+            done
+            echo "Configure the listed credentials in Settings > Secrets and variables"
+            echo "or in the repo-provisioning environment. See docs/configuration.md."
+            exit 1
+          fi
+
       - name: Create GitHub App installation token
         id: app-token
         uses: actions/create-github-app-token@v3
