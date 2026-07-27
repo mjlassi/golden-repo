@@ -20,8 +20,7 @@ def test_workflow_accepts_both_client_id_and_legacy_app_id_credentials():
     content = WORKFLOW_PATH.read_text(encoding="utf-8")
 
     assert (
-        "client-id: ${{ vars.PROVISIONER_APP_CLIENT_ID || secrets.PROVISIONER_APP_CLIENT_ID }}"
+        "client-id: ${{ vars.PROVISIONER_APP_CLIENT_ID || secrets.PROVISIONER_APP_CLIENT_ID || vars.PROVISIONER_APP_ID || secrets.PROVISIONER_APP_ID }}"
         in content
     )
-    assert "app-id: ${{ vars.PROVISIONER_APP_ID || secrets.PROVISIONER_APP_ID }}" in content
     assert "private-key: ${{ secrets.PROVISIONER_APP_PRIVATE_KEY }}" in content
