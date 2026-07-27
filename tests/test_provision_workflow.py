@@ -24,3 +24,14 @@ def test_workflow_accepts_both_client_id_and_legacy_app_id_credentials():
         in content
     )
     assert "private-key: ${{ secrets.PROVISIONER_APP_PRIVATE_KEY }}" in content
+
+
+def test_workflow_validates_credentials_before_token_step():
+    content = WORKFLOW_PATH.read_text(encoding="utf-8")
+
+    assert "Validate provisioning credentials" in content
+    validation_pos = content.index("Validate provisioning credentials")
+    token_pos = content.index("Create GitHub App installation token")
+    assert validation_pos < token_pos, (
+        "Credential validation step must appear before the App token creation step"
+    )
