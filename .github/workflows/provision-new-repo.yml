@@ -1,9 +1,11 @@
 # MANUAL ONE-TIME SETUP:
-# 1. Register an org GitHub App for josunefoOrg with repository permissions:
+# 1. Register a GitHub App for the target owner with repository permissions:
 #    Administration RW, Contents RW, Metadata R, Actions RW, Code scanning alerts RW,
 #    Secret scanning alerts RW, Dependabot alerts RW, and Members R.
-# 2. Install the GitHub App on the josunefoOrg organization.
-# 3. Add org secret PROVISIONER_APP_PRIVATE_KEY and org variable PROVISIONER_APP_ID.
+# 2. Install the GitHub App on the target user or organization account.
+# 3. Add PROVISIONER_APP_PRIVATE_KEY plus either PROVISIONER_APP_CLIENT_ID or
+#    PROVISIONER_APP_ID as Actions credentials in the workflow repository,
+#    environment, or owner scope.
 # 4. Create the repo-provisioning environment with required reviewers. Environment
 #    approval gates cannot be fully scripted and must be configured manually.
 
@@ -60,9 +62,10 @@ jobs:
         id: app-token
         uses: actions/create-github-app-token@v3
         with:
-          app-id: ${{ vars.PROVISIONER_APP_ID }}
+          client-id: ${{ vars.PROVISIONER_APP_CLIENT_ID || secrets.PROVISIONER_APP_CLIENT_ID }}
+          app-id: ${{ vars.PROVISIONER_APP_ID || secrets.PROVISIONER_APP_ID }}
           private-key: ${{ secrets.PROVISIONER_APP_PRIVATE_KEY }}
-          owner: josunefoOrg
+          owner: ${{ github.repository_owner }}
 
       - name: Set up Python
         uses: actions/setup-python@v6
@@ -85,7 +88,7 @@ jobs:
 
           args=(
             --name "$INPUT_REPO_NAME"
-            --org "josunefoOrg"
+            --org "${{ github.repository_owner }}"
             --visibility "$INPUT_VISIBILITY"
             --team "$INPUT_TEAM"
           )
@@ -106,4 +109,4 @@ jobs:
         run: |
           echo "## Provisioned repository" >> "$GITHUB_STEP_SUMMARY"
           echo "" >> "$GITHUB_STEP_SUMMARY"
-          echo "https://github.com/josunefoOrg/$INPUT_REPO_NAME" >> "$GITHUB_STEP_SUMMARY"
+          echo "https://github.com/${{ github.repository_owner }}/$INPUT_REPO_NAME" >> "$GITHUB_STEP_SUMMARY"

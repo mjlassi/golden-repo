@@ -78,16 +78,18 @@ Create the environment in the repository that hosts the workflow:
 6. Add the approver team or users, preferably `maintainers` or `platform-team`.
 7. Save the protection rules.
 
-The workflow also needs these organization-level Actions credentials from the provisioning GitHub App:
+The workflow also needs these Actions credentials from the provisioning GitHub App:
 
-- Variable: `PROVISIONER_APP_ID`
+- Variable or secret: `PROVISIONER_APP_CLIENT_ID` (preferred)
+- Variable or secret: `PROVISIONER_APP_ID` (legacy fallback)
 - Secret: `PROVISIONER_APP_PRIVATE_KEY`
 
 Set them with `gh`:
 
 ```bash
-gh variable set PROVISIONER_APP_ID --org josunefoOrg --body "<app-id>"
-gh secret set PROVISIONER_APP_PRIVATE_KEY --org josunefoOrg < path/to/private-key.pem
+gh variable set PROVISIONER_APP_CLIENT_ID --repo <owner>/golden-repo --body "<client-id>"
+gh variable set PROVISIONER_APP_ID --repo <owner>/golden-repo --body "<app-id>"
+gh secret set PROVISIONER_APP_PRIVATE_KEY --repo <owner>/golden-repo < path/to/private-key.pem
 ```
 
 Visibility flags may be required by org policy, for example `--visibility all` or selected repository access. See [docs/SETUP.md](docs/SETUP.md) for the full one-time GitHub App registration and installation steps.

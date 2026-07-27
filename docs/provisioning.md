@@ -86,8 +86,10 @@ repository creation:
 1. A developer starts the workflow with `workflow_dispatch` and supplies inputs.
 2. The job targets the `repo-provisioning` GitHub Environment.
 3. Required reviewers approve the deployment, which releases the provisioning job.
-4. The workflow exchanges the stored GitHub App credentials for a short-lived
-   installation token and runs the provisioner.
+4. The workflow exchanges the configured GitHub App credentials for a short-lived
+   installation token and runs the provisioner. The workflow accepts either the
+   preferred `PROVISIONER_APP_CLIENT_ID` credential or the legacy
+   `PROVISIONER_APP_ID` fallback, together with `PROVISIONER_APP_PRIVATE_KEY`.
 
 See [Configuration](configuration.md) for the one-time environment, variable, and
 secret setup the workflow requires.
