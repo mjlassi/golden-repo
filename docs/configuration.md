@@ -6,30 +6,31 @@ nav_order: 4
 
 # Configuration
 
-The self-service provisioning workflow requires one-time organization and
-repository configuration. This page summarizes what to set. For the full,
+The self-service provisioning workflow requires one-time owner and repository
+configuration. This page summarizes what to set. For the full,
 step-by-step GitHub App registration and installation flow, see
 [GitHub App setup](SETUP.md).
 
-## Required organization credentials
+## Required provisioning credentials
 
-The workflow authenticates as a GitHub App and needs these organization-level
-Actions credentials:
+The workflow authenticates as a GitHub App and needs these Actions credentials:
 
 | Kind | Name | Value |
 | ---- | ---- | ----- |
-| Variable | `PROVISIONER_APP_ID` | The provisioning GitHub App ID. |
+| Variable or secret | `PROVISIONER_APP_CLIENT_ID` | The provisioning GitHub App client ID (preferred for `actions/create-github-app-token@v3`). |
+| Variable or secret | `PROVISIONER_APP_ID` | The legacy GitHub App ID fallback. |
 | Secret | `PROVISIONER_APP_PRIVATE_KEY` | The App private key, including the BEGIN and END lines. |
 
-Set them with `gh`:
+Set them on the repository, environment, or owner account with `gh`:
 
 ```bash
-gh variable set PROVISIONER_APP_ID --org josunefoOrg --body "<app-id>"
-gh secret set PROVISIONER_APP_PRIVATE_KEY --org josunefoOrg < path/to/private-key.pem
+gh variable set PROVISIONER_APP_CLIENT_ID --repo <owner>/golden-repo --body "<client-id>"
+gh variable set PROVISIONER_APP_ID --repo <owner>/golden-repo --body "<app-id>"
+gh secret set PROVISIONER_APP_PRIVATE_KEY --repo <owner>/golden-repo < path/to/private-key.pem
 ```
 
-Organization policy may require visibility flags, for example `--visibility all`
-or selected repository access.
+Owner-level policy may require visibility flags, for example `--visibility all` or
+selected repository access.
 
 ## Required GitHub App permissions
 
@@ -48,7 +49,7 @@ approval gate before privileged provisioning runs.
 Environment protection rules and required reviewers cannot be created through the
 API and must be configured manually in the GitHub UI:
 
-1. Open repository or organization settings for `josunefoOrg/golden-repo`.
+1. Open settings for the repository that hosts the workflow.
 2. Go to Settings, then Environments.
 3. Select New environment and name it `repo-provisioning`.
 4. Enable Required reviewers.
@@ -66,9 +67,9 @@ personal access tokens are not supported by the Copilot CLI. See
 
 ## Configuration checklist
 
-- [ ] `PROVISIONER_APP_ID` organization variable is set.
-- [ ] `PROVISIONER_APP_PRIVATE_KEY` organization secret is set.
-- [ ] The provisioning GitHub App is installed on the organization.
+- [ ] `PROVISIONER_APP_CLIENT_ID` or `PROVISIONER_APP_ID` is set where the workflow can read it.
+- [ ] `PROVISIONER_APP_PRIVATE_KEY` is set where the workflow can read it.
+- [ ] The provisioning GitHub App is installed on the target owner account.
 - [ ] The `repo-provisioning` environment exists with required reviewers.
 - [ ] `golden-repo` is marked as a template repository.
 - [ ] GitHub Advanced Security is enabled where private repositories need it.
